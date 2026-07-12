@@ -1,0 +1,64 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "my-project"
+version = "0.1.0"
+description = "<one-line project description>"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Yap Joon Siong" }]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=5",
+    "mypy>=1.11",
+    "ruff>=0.6",
+]
+
+# CLI entry point (uncomment if this project ships a command-line tool).
+# [project.scripts]
+# my-project = "myProject.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/myProject"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# N (pep8-naming) is deliberately excluded so camelCase functions/variables
+# are not flagged -- see CONVENTIONS.md "Naming conventions".
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["E501"]  # line length handled by the formatter
+
+[tool.ruff.format]
+# Match .editorconfig / .gitattributes so the formatter and editors agree on
+# line endings across platforms.
+line-ending = "lf"
+
+[tool.mypy]
+# Enforces the "type hints required on public functions" rule from
+# CONVENTIONS.md. Scoped to the shipped package; tests are not type-checked.
+files = ["src/myProject"]
+python_version = "3.12"
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+no_implicit_optional = true
+show_error_codes = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Strict, cheap, always on. Coverage is NOT measured here so the dev loop
+# (`uv run pytest`) stays fast and does not fail during red-phase work; the
+# coverage threshold is enforced by `scripts/check.py` instead.
+addopts = ["--strict-markers", "--strict-config", "-ra"]
