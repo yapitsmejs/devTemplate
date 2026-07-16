@@ -1,39 +1,92 @@
-# myProject
+# simValidation
 
-<One-line project description.>
+Temporary tools to validate a radar simulator.
+
+## Purpose
+
+This is a small, single-user repository of throwaway tools for validating a
+radar simulator. It is **not** a development project and **not** meant to ship:
+after the simulator is validated, a more full-purpose interface will be built
+separately for a team of developers to use. Everything here exists only to
+answer "is the simulator producing correct SAR data?" through human inspection.
+
+The first usable version is a pipeline that reads the raw data pulses (and
+reference pulse) produced by the simulator, performs a matched filter, and
+backprojects the result into a SAR image. The supplied data is a single trihedral
+target imaged from 360 viewing angles, so "the simulator looks right" means a
+well-focused point target in the reconstructed image.
 
 ## Install
 
-This project is managed with [`uv`](https://docs.astral.sh/uv/).
+This project is managed with [`uv`](https://docs.astral.sh/uv/). Python 3.12 is
+required, and `cupy` is expected to be installable on this machine (CUDA wheels
+are resolved by `uv`).
 
 ```bash
-uv sync --extra dev          # create .venv and install dev dependencies (pytest, ruff)
+uv sync --extra dev          # create .venv and install runtime + dev dependencies
 ```
+
+Runtime dependencies are `numpy`, `scipy`, `matplotlib`, `cupy` (GPU
+acceleration), and `psutil` (read available RAM for automatic data chunking).
 
 ## Usage
 
-<Describe how to run the project.>
+There is no CLI. Tools are run as scripts, typically under a debugger so
+intermediate variables (raw pulses, matched-filter output, the focused image)
+can be inspected directly.
+
+The intended data flow is:
+
+1. **Read raw pulses** from the simulator output directory
+   (`C:\Users\yJoonSio\OneDrive - DSO\trihedral`) — the phase-history pulses plus
+   the reference pulse.
+2. **Matched filter** the pulses against the reference.
+3. **Backproject** the matched-filtered data into a SAR image, using the
+   backprojection packages from the local `sar-ifp` repository
+   (`C:\Users\yJoonSio\Desktop\ghRepos\sar-ifp`).
+
+A representative script (planned shape — modules land per the development plan):
 
 ```python
-import myProject
+from __future__ import annotations
 
-print(myProject.__version__)
+import simValidation as sv
+
+# 1. Read raw pulses + reference pulse from the simulator output directory.
+pulses, referencePulse, metadata = sv.readPulses(
+    r"C:\Users\yJoonSio\OneDrive - DSO\trihedral"
+)
+
+# 2. Matched filter (cupy-accelerated, chunked to fit VRAM/RAM).
+mfSignal = sv.matchFilter(pulses, referencePulse)
+
+# 3. Backproject into a SAR image via the local sar-ifp backprojection packages.
+image = sv.backproject(mfSignal, metadata)
+
+# Inspect `image` in the debugger -- expect a well-focused point target.
 ```
+
+> Do **not** modify anything outside this repository unless explicitly told — in
+> particular, treat `sar-ifp` as a read-only dependency to integrate against, not
+> something to edit from here.
 
 ## Development
 
 ```bash
-uv run pytest                 # run tests (dev loop, no coverage gate)
 uv run ruff check .           # lint
 uv run ruff format .          # format
-uv run mypy src/myProject     # type check
-uv run python scripts/check.py   # GATE: lint + format + types + tests + branch coverage ≥ 90%
+uv run mypy src/simValidation # type check
+uv run python scripts/check.py   # GATE: lint + format + types (code standards only)
 ```
 
 Run `scripts/check.py` before pushing or opening a PR — it fails if ruff is
-unhappy, formatting would change, **mypy** finds a type error, or branch coverage
-on the package drops below 90%. See [`CONVENTIONS.md`](CONVENTIONS.md) for the
-full naming, code-style, and test-driven conventions.
+unhappy, formatting would change, or **mypy** finds a type error. There are
+**no functional tests and no coverage gate** in this project: it is a temporary
+validation toolbox, and results are judged by human inspection (e.g. a focused
+point target) rather than by assertions. See
+[`CONVENTIONS.md`](CONVENTIONS.md) for the full naming and code-style
+conventions, and [`plans/developmentPlan.md`](plans/developmentPlan.md) for the
+phased roadmap.
 
 ### Automation
 
@@ -46,34 +99,9 @@ These run the same gate as you do locally, so a red PR cannot merge:
   git config core.hooksPath .githooks
   git update-index --chmod=+x .githooks/pre-commit .githooks/pre-push
   ```
-  Use `git commit --no-verify` during active red-phase work; the pre-push hook
-  and CI still enforce before anything lands.
+  Use `git commit --no-verify` during active work; the pre-push hook and CI
+  still enforce before anything lands.
 - **Dependabot** (`.github/dependabot.yml`) opens weekly dependency PRs (uv +
   GitHub Actions) that must pass the gate like any other.
 - **PR template** (`.github/PULL_REQUEST_TEMPLATE.md`) prompts contributors for
-  the red-green workflow and the gate checklist.
-
-## Starting a new project from this template
-
-Copy this directory, rename the folder to your project's name, `git init` it,
-and hand the following prompt to your agent (any framework — Claude, Cursor,
-Codex, or other). Rename the **root folder yourself before invoking the
-agent** — the agent renames everything inside the project (the package
-directory and every file), but it cannot reliably rename the folder it is
-running inside. The folder name is cosmetic here: no file references it, so it
-does not affect the gate.
-
-```
-Set up a new project from this template. Read `agenticProjectSetup.md` and
-follow every step in order: ask me the intake questions first, then do the
-mechanical rename and find-replace, propose dependencies to add, rewrite this
-README and create `plans/developmentPlan.md`, delete the example files and
-`agenticProjectSetup.md`, run a placeholder sweep, and run the gate
-(`uv run python scripts/check.py`). Report what you did and paste the gate
-output.
-```
-
-The agent reads `agenticProjectSetup.md` for the full runbook (intake question
-set, exact substitutions, prose to write, cleanup, and the gate). That file is
-a throwaway setup guide — it is deleted as part of setup and is not part of the
-shipped project.
+  the gate checklist.

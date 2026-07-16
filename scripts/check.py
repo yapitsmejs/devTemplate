@@ -1,16 +1,13 @@
-"""Project gate: lint + format check + type check + tests with branch coverage.
+"""Project gate: lint + format check + type check.
 
 Run before pushing or opening a PR::
 
     uv run python scripts/check.py
 
-The dev loop is just ``uv run pytest`` (fast, no coverage gate). This script is
-the enforcement layer: it fails if ruff is unhappy, formatting would change,
-mypy finds a type error, or branch coverage on ``myProject`` drops below the
-threshold below.
-
-Rename ``myProject`` -> your package's import name when starting a project from
-this template (see README "Starting a new project").
+This project is a temporary, single-user toolbox for validating a radar
+simulator, so the gate enforces only code standards (ruff check, ruff format
+``--check``, mypy). Functional tests and branch coverage are intentionally not
+part of the gate -- see ``README.md`` and ``CONVENTIONS.md``.
 """
 
 from __future__ import annotations
@@ -18,10 +15,9 @@ from __future__ import annotations
 import subprocess
 import sys
 
-# Coverage target is the package import name. Find-replace when renaming the
-# package (same target as pyproject.toml `packages = [...]` and the tests).
-PACKAGE = "myProject"
-COVERAGE_FAIL_UNDER = 90
+# Lint/type-check target is the package import name. Keep in sync with
+# pyproject.toml `packages = [...]` and `[tool.mypy] files`.
+PACKAGE = "simValidation"
 
 
 def _run(label: str, cmd: list[str]) -> bool:
@@ -38,21 +34,6 @@ def main() -> int:
         ("ruff check", [py, "-m", "ruff", "check", "."]),
         ("ruff format --check", [py, "-m", "ruff", "format", "--check", "."]),
         ("mypy", [py, "-m", "mypy", f"src/{PACKAGE}"]),
-        (
-            "pytest + coverage",
-            [
-                py,
-                "-m",
-                "pytest",
-                "--cov",
-                PACKAGE,
-                "--cov-branch",
-                "--cov-report",
-                "term-missing",
-                "--cov-fail-under",
-                str(COVERAGE_FAIL_UNDER),
-            ],
-        ),
     ]
     for label, cmd in steps:
         if not _run(label, cmd):

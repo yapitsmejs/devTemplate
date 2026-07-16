@@ -20,7 +20,7 @@ the quantity's name.
   - Unitless quantities are plain camelCase: `pixelWiseDelay`, `interpValues`,
     `phaseCorrection`.
 - **Modules / files & the import package:** camelCase — `normalizeSignal.py`,
-  `computeStats.py`, the package `myProject/`. Private modules lead with an
+  `computeStats.py`, the package `simValidation/`. Private modules lead with an
   underscore: `_chunking.py`, `_phaseCorrelationCore.py`.
 - **Functions:** camelCase public — `formImage`, `computeFbr`, `getTxPos`.
   Private helpers are `_camelCase` — `_robustMode`, `_selfcheck`. Backend-dispatch
@@ -38,8 +38,8 @@ the quantity's name.
 - **Type hints are required** on public functions. Use PEP 604/585 style:
   `x | None`, `list[int]`, `dict[str, float]`, `tuple[float, float] | None`. Do
   not use `typing.Optional` / `typing.List`. Enforced by **mypy**
-  (`uv run mypy src/myProject`, and via the gate) — the gate fails on an untyped
-  public function.
+  (`uv run mypy src/simValidation`, and via the gate) — the gate fails on an
+  untyped public function.
 - **Group imports** in order: future → stdlib → third-party → local, with a
   blank line between groups. Let `ruff` (rule `I`) own the ordering.
 - **Google-style docstrings** on every public function:
@@ -60,28 +60,22 @@ the quantity's name.
 - **ruff** selects `E, F, W, I, UP, B` and ignores `E501`. `N` (pep8-naming) is
   deliberately excluded so camelCase identifiers are not flagged — do not add it.
 
-## Testing / Test-driven development
+## Code standards (the gate)
 
-This project is test-driven. Features land with tests, and a coverage gate
-keeps it that way.
+This is a temporary, single-user toolbox for validating a radar simulator, not a
+shipped product, so it is **not** test-driven and has **no functional tests or
+coverage gate**. What is enforced is code standards only.
 
-- **Test-first (red-green-refactor):** before writing or changing behavior,
-  write or extend the relevant `tests/test_<module>.py` test and run it red
-  (`uv run pytest tests/test_<module>.py`). Then write the minimal
-  implementation to turn it green, then refactor.
-- **Dev loop:** `uv run pytest` runs the full suite fast, with **no coverage
-  enforcement** — use it during red/green work.
 - **Gate:** `uv run python scripts/check.py` runs ruff check, ruff format
-  `--check`, **mypy**, and pytest with branch coverage. Branch coverage on the
-  package must stay **≥ 90%**. Run it (and it must pass) before pushing or opening
-  a PR. CI (`.github/workflows/ci.yml`) runs the same gate on every push and PR,
-  so a red PR cannot merge.
-- **Test naming:** `test` + camelCase name, optionally a `_aspect` suffix —
-  `testVersionIsSet`, `testClampValue_clampsBelowLow`. (Same camelCase rule as
-  the rest of the codebase; `N`/pep8-naming stays excluded in ruff.)
-- **Layout:** one `tests/test_<module>.py` per source module
-  (`example.py` → `tests/test_example.py`). `test_smoke.py` is the lone
-  cross-cutting smoke test.
+  `--check`, and mypy. Run it (and let it pass) before pushing or opening a PR.
+  CI (`.github/workflows/ci.yml`) runs the same gate on every push and PR.
+- **Working style:** scripts are typically run directly under a debugger for
+  easy variable inspection, not via a CLI or test harness. Validate results by
+  inspection — e.g. a focused point target in the output SAR image — rather than
+  by assertions.
+- **If ad-hoc tests are wanted later:** add a `tests/` directory and re-add
+  `pytest` to `[project.optional-dependencies].dev`; the gate does not run it
+  unless you wire it back into `scripts/check.py`.
 
 ## Commit convention
 

@@ -3,29 +3,41 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "my-project"
+name = "sim-validation"
 version = "0.1.0"
-description = "<one-line project description>"
+description = "Temporary tools to validate a radar simulator."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "Yap Joon Siong" }]
-dependencies = []
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.12",
+    "matplotlib>=3.8",
+    # cuPy via the CUDA 13.x prebuilt-wheel package (this machine has CUDA 13.0).
+    # The bare `cupy` sdist would force a from-source MSVC build on Windows.
+    "cupy-cuda13x>=14.0",
+    "psutil>=5.9",
+    # Local backprojection backend. Read-only dependency at
+    # C:\Users\yJoonSio\Desktop\ghRepos\sar-ifp -- integrate against it, never edit it.
+    # Wired as an editable local source below so `import sarIfp` works under `uv sync`.
+    "sar-ifp",
+]
+
+[tool.uv.sources]
+sar-ifp = { path = "C:/Users/yJoonSio/Desktop/ghRepos/sar-ifp", editable = true }
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8",
-    "pytest-cov>=5",
     "mypy>=1.11",
     "ruff>=0.6",
 ]
 
-# CLI entry point (uncomment if this project ships a command-line tool).
-# [project.scripts]
-# my-project = "myProject.cli:main"
+# This project does not ship a CLI; scripts are run directly (typically in a
+# debugger for easy variable inspection). No [project.scripts] entry is defined.
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/myProject"]
+packages = ["src/simValidation"]
 
 [tool.ruff]
 line-length = 100
@@ -44,8 +56,8 @@ line-ending = "lf"
 
 [tool.mypy]
 # Enforces the "type hints required on public functions" rule from
-# CONVENTIONS.md. Scoped to the shipped package; tests are not type-checked.
-files = ["src/myProject"]
+# CONVENTIONS.md. Scoped to the shipped package.
+files = ["src/simValidation"]
 python_version = "3.12"
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
@@ -56,9 +68,9 @@ warn_return_any = true
 no_implicit_optional = true
 show_error_codes = true
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-# Strict, cheap, always on. Coverage is NOT measured here so the dev loop
-# (`uv run pytest`) stays fast and does not fail during red-phase work; the
-# coverage threshold is enforced by `scripts/check.py` instead.
-addopts = ["--strict-markers", "--strict-config", "-ra"]
+# cupy and the read-only sar-ifp backend ship without py.typed/stubs; treat them
+# as Any so the gate (mypy) does not fail on missing library stubs. We do not own
+# or type-check those packages.
+[[tool.mypy.overrides]]
+module = ["cupy", "cupy.*", "sarIfp", "sarIfp.*"]
+ignore_missing_imports = true

@@ -7,7 +7,7 @@ on:
 
 jobs:
   gate:
-    name: Gate (lint + format + types + tests + coverage)
+    name: Gate (lint + format + types)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

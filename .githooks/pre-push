@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Pre-push hook: full gate (lint + format + types + tests + >=90% branch coverage).
+# Pre-push hook: full gate (lint + format + types).
 #
 # One-time setup (per clone):
 #   git config core.hooksPath .githooks

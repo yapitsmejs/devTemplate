@@ -2,16 +2,15 @@
 
 <!-- What does this PR change, and why? -->
 
-## Test-driven work
+## Gate
 
-- [ ] Tests written/extended first and run red
-      (`uv run pytest tests/test_<module>.py`)
-- [ ] Minimal implementation added to turn them green, then refactored
 - [ ] `uv run python scripts/check.py` passes
-      (ruff + format + mypy + tests + ≥90% branch coverage)
+      (ruff check + ruff format --check + mypy)
 
 ## Checklist
 
 - [ ] Public functions have type hints + Google-style docstrings
 - [ ] `ruff format` applied; no new lint findings
 - [ ] Naming follows `camelCase` + `_aspect` suffix (see `CONVENTIONS.md`)
+- [ ] No changes made outside this repository (e.g. `sar-ifp`) unless explicitly
+      told to
