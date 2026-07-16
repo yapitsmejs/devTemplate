@@ -5,8 +5,8 @@
 #   git config core.hooksPath .githooks
 #   git update-index --chmod=+x .githooks/pre-commit .githooks/pre-push
 #
-# Bypass during active red-phase work with `git commit --no-verify`.
-# The full gate (tests + coverage + types) runs on the pre-push hook and in CI.
+# Bypass during active work with `git commit --no-verify`.
+# The full gate (format + types) runs on the pre-push hook and in CI.
 
 set -e
 
