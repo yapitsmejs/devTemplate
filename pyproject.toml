@@ -17,7 +17,7 @@ dev = [
     "pytest>=8",
     "pytest-cov>=5",
     "mypy>=1.11",
-    "ruff>=0.6",
+    "ruff>=0.15.22",
 ]
 
 # CLI entry point (uncomment if this project ships a command-line tool).
